@@ -1,9 +1,13 @@
 import dotenv from "dotenv";
+import cookieParser from 'cookie-parser';
+
 import express, { type Request, type Response } from "express";
 import pool from "./config/database";
 import { createTables } from "./config/initialize_database";
 import extensionUserRoutes from "./routes/auth.route";
+import projectRoutes from "./routes/project.route";
 import { authMiddleware } from "./middleware/auth.middleware";
+import { seedMockData } from "./config/addMockData";
 dotenv.config();
 
 const app: express.Application = express();
@@ -12,14 +16,16 @@ const port: number = Number(process.env.PORT);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.get("/", async (req: Request, res: Response) => {
   return res.send("API HIT");
 });
 
-app.use(authMiddleware)
+app.use(authMiddleware);
 
 app.use("/auth", extensionUserRoutes);
+app.use("/projects", projectRoutes);
 
 app.listen(port, async () => {
   try {
@@ -33,6 +39,7 @@ app.listen(port, async () => {
     });
 
     await createTables();
+    await seedMockData();
     console.log(`Server is running on ${port}`);
   } catch (error: any) {
     console.error("Error creating database: ", error);
